@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const app = express();
 
@@ -27,20 +27,37 @@ async function run() {
     await client.connect();
     const postCollection = client.db('netcom').collection('posts');
 
-    // get userpost api
-    app.get('/posts', async(req, res) =>{
+    // get userPost api
+    app.get('/posts', async (req, res) => {
       const query = {};
       const cursor = postCollection.find(query);
-      const newPost = await cursor.toArray();
-      res.send(newPost);
+      const result = await cursor.toArray();
+      res.send(result);
     })
-  
+
     // post userPost api
-    app.post('/posts', async(req, res) =>{
+    app.post('/posts', async (req, res) => {
       const newPost = req.body;
       const result = await postCollection.insertOne(newPost);
       res.send(result);
     });
+
+    // get myAllPost api
+    app.get('/mypost', async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const myposts = await postCollection.find(query).toArray();
+      res.send(myposts);
+    });
+
+    // delete my post api
+    app.delete('/mypost/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await postCollection.deleteOne(query);
+      res.send(result);
+    });
+
   }
   finally {
 
@@ -48,7 +65,7 @@ async function run() {
 }
 
 
- run().catch(console.dir); 
+run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
